@@ -39,9 +39,7 @@ class Solution {
                 }
             } else {
                 // 기존 자릿수에서 못바꿈
-                newBinaryString = "1";
-                for (int j = 0; j < s-2; j++) newBinaryString += "0";
-                newBinaryString += "11";
+                newBinaryString = "10" + binaryString.substring(1);
             }
             answer[i] = Long.parseLong(newBinaryString, 2);
         }
