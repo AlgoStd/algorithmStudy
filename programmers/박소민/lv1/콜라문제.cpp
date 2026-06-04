@@ -14,3 +14,6 @@ int solution(int a, int b, int n) {
     
     return answer;
 }
+
+// answer = ((n - b) / (a - b)) * b;
+// 이런 방법도 있다.. 참고
