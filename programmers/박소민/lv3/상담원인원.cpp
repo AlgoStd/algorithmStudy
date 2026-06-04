@@ -1,76 +1,70 @@
 #include <string>
+#include <queue>
 #include <vector>
 #include <climits>
 
 using namespace std;
 
-void calculate_time(vector<int>& current_mentors, int& min_time, vector<vector<int>>& reqs) {
-    vector<vector <int>> times;
-    int delay_time = 0;
+using MinHeap = priority_queue<int, vector<int>, greater<int>>;
+// priority_queue<저장할 데이터 타입 int, 1차원 동적 배열, 비교 연산자 greater<int> || less<int>>
+
+int calculateWaitTime(const vector<int>& mentors_per_type, const vector<vector<int>>& reqs) {
+    int total_wait_time = 0;
+    int k = mentors_per_type.size();
     
-    // 1. 초기화
-    for (int i=0; i<current_mentors.size(); i++) {
-        vector<int> arr(current_mentors[i], 0);
-        
-        times.push_back(arr);
+    vector<MinHeap> end_times(k);
+    
+    for (int i = 0; i < k; i++) {
+        for (int j = 0; j < mentors_per_type[i]; j++) {
+            end_times[i].push(0);
+        }
     }
     
-    for (int i=0; i<reqs.size(); i++) {
-        int start = reqs[i][0];
-        int end = reqs[i][1];
-        int types = reqs[i][2] - 1;
+    for (const auto& req : reqs) {
+        int start_time = req[0];
+        int duration = req[1];
+        int type = req[2] - 1;
         
-        int min_end_time = INT_MAX;
-        int min_idx;
+        int earliest_end = end_times[type].top();
+        end_times[type].pop();
         
-        for (int j=0; j<times[types].size(); j++) {
-            if (min_end_time > times[types][j]) {
-                min_end_time = times[types][j];
-                min_idx = j;
-            }
-        }
-        
-        if (min_end_time <= start) {
-            times[types][min_idx] = start + end;
+        if (earliest_end <= start_time) {
+            end_times[type].push(start_time + duration);
         } else {
-            times[types][min_idx] = min_end_time + end;
-            
-            delay_time += (min_end_time) - start;
+            total_wait_time += (earliest_end - start_time);
+            end_times[type].push(earliest_end + duration);
         }
     }
     
-    if (delay_time < min_time) {
-        min_time = delay_time;
-    }
-    
-    return;
+    return total_wait_time;
 }
 
-void dfs(int k, int depth, int remain_mentors, vector<int>& current_mentors, int& min_time, vector<vector<int>>& reqs) {
-    if (depth == k) {
-        calculate_time(current_mentors, min_time, reqs);
-        
+void dfs(int current_type, int k, int remain_mentors, vector<int>& current_mentors, int& min_wait_time, const vector<vector<int>>& reqs) {
+    if (current_type == k) {
+        int wait_time = calculateWaitTime(current_mentors, reqs);
+        min_wait_time = min(min_wait_time, wait_time);
         return;
     }
-
-    if (depth == k - 1) {
+    
+    if (current_type == k - 1) {
         current_mentors.push_back(remain_mentors);
-        dfs(k, depth+1, 0, current_mentors, min_time, reqs);
+        dfs(current_type + 1, k, 0, current_mentors, min_wait_time, reqs);
         current_mentors.pop_back();
     } else {
-        for (int i=1; i<=remain_mentors - (k - depth-1); i++) {
+        int max_possible = remain_mentors - (k - current_type - 1);
+        for (int i = 1; i <= max_possible; i++) {
             current_mentors.push_back(i);
-            dfs(k, depth+1, remain_mentors - i, current_mentors, min_time, reqs);
+            dfs(current_type + 1, k, remain_mentors -  i, current_mentors, min_wait_time, reqs);
             current_mentors.pop_back();
         }
     }
 }
 
 int solution(int k, int n, vector<vector<int>> reqs) {
-    int min_time = INT_MAX;
-    
+    int min_wait_time = INT_MAX;
     vector<int> current_mentors;
-    dfs(k, 0, n, current_mentors, min_time, reqs);
     
-    return min_time;
+    dfs(0, k, n, current_mentors, min_wait_time, reqs);
+    
+    return min_wait_time;
 }
