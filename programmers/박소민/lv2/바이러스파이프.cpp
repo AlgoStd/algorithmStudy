@@ -5,10 +5,10 @@
 
 using namespace std;
 
-void bfs(int pipe, vector<int>& visited, vector<vector<vector<int>>>& graph) {
+void bfs(int pipe, vector<bool>& visited, vector<vector<vector<int>>>& graph) {
     queue<int> q;
     
-    for (int i=0; i<visited.size(); i++) {
+    for (int i=1; i<visited.size(); i++) {
         if (visited[i]) {
             q.push(i);
         }
@@ -18,8 +18,7 @@ void bfs(int pipe, vector<int>& visited, vector<vector<vector<int>>>& graph) {
         int curr_node = q.front();
         q.pop();
         
-        for (int i = 0; i < graph[pipe][curr_node].size(); i++) {
-            int next_node = graph[pipe][curr_node][i];
+        for (int next_node : graph[pipe][curr_node]) {
             
             if (visited[next_node]) continue;
             
@@ -31,34 +30,36 @@ void bfs(int pipe, vector<int>& visited, vector<vector<vector<int>>>& graph) {
     return;
 }
 
-void dfs(int repeat_time, int& k, vector<int> visited, vector<vector<vector<int>>>& graph, int& max_infected_nodes) {
-    if (repeat_time == k) {
-        int infected_nodes = 0;
-        for (int i=0; i<visited.size(); i++) {
-            if (visited[i]) {
-                infected_nodes++;
-            }
-        }
+void dfs(int current_turn, int max_turn, vector<bool> visited, vector<vector<vector<int>>>& graph, int& max_infected_nodes) {
+    if (current_turn == max_turn) {
+        int infected_nodes = count(visited.begin(), visited.end(), true);
         max_infected_nodes = max(infected_nodes, max_infected_nodes);
         return;
     }
     
     for (int pipe=1; pipe<=3; pipe++) {
-        vector<int> next_visited = visited;
+        vector<bool> next_visited = visited;
+        
         bfs(pipe, next_visited, graph);
-        dfs(repeat_time + 1, k, next_visited, graph, max_infected_nodes);
+        dfs(current_turn + 1, max_turn, next_visited, graph, max_infected_nodes);
     }
 }
 
 int solution(int n, int infection, vector<vector<int>> edges, int k) {
     int max_infected_nodes = 0;
     vector<vector<vector<int>>> graph(4, vector<vector<int>>(n+1));
-    vector<int> visited(n+1, false);
+    vector<bool> visited(n+1, false);
     
-    for (int i = 0; i < edges.size(); i++) {
-        graph[edges[i][2]][edges[i][0]].push_back(edges[i][1]);
-        graph[edges[i][2]][edges[i][1]].push_back(edges[i][0]);
+    for (const auto& edge : edges) {
+        int u = edge[0];
+        int v = edge[1];
+        int pipe_type = edge[2];
+        
+        graph[pipe_type][u].push_back(v);
+        graph[pipe_type][v].push_back(u);
     }
+    
+    visited[infection] = true;
     
     dfs(0, k, visited, graph, max_infected_nodes);
     
