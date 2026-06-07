@@ -1,57 +1,51 @@
 #include <string>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
-// prev 10초 전으로 이동
-// next 10초 후로 이동
-// 오프닝 구간 - 오프닝 건너뛰기
+int toSeconds(const string& time_str) {
+    int m = stoi(time_str.substr(0, 2));
+    int s = stoi(time_str.substr(3, 2));
+    return m * 60 + s;
+}
+
+string toTimeStr(int total_seconds) {
+    int m = total_seconds / 60;
+    int s = total_seconds % 60;
+    
+    char buf[6];
+    snprintf(buf, sizeof(buf), "%02d:%02d", m, s);
+    
+    return string(buf);
+}
 
 string solution(string video_len, string pos, string op_start, string op_end, vector<string> commands) {
-    string answer = "";
-    int current_t = stoi(pos.substr(0, 2)) * 60 + stoi(pos.substr(3));
-    int start_t = stoi(op_start.substr(0, 2)) * 60 + stoi(op_start.substr(3));
-    int end_t = stoi(op_end.substr(0, 2)) * 60 + stoi(op_end.substr(3));
-    int video_l = stoi(video_len.substr(0, 2)) * 60 + stoi(video_len.substr(3));
+    int video_t = toSeconds(video_len);
+    int current_t = toSeconds(pos);
+    int op_s = toSeconds(op_start);
+    int op_e = toSeconds(op_end);
     
-    if (current_t >= start_t && current_t <= end_t) {
-        current_t = end_t;
-    }
+    // 오프닝 구간 건너뛰는 함수 -> 람다
+    auto skipOpening = [&](int time) {
+        if (time >= op_s && time <= op_e) {
+            return op_e;
+        }
+        return time;
+    };
     
-    for (int i=0; i<commands.size(); i++) {
-        string &val = commands[i];
-        
-        if (val == "prev") {
-            current_t -= 10;
-        } else if (val == "next") {
-            current_t += 10;
+    // 초기 위치 오프닝 체크
+    current_t = skipOpening(current_t);
+    
+    for (const string& cmd : commands) {
+        if (cmd == "prev") {
+            current_t = max(0, current_t - 10);
+        } else if (cmd == "next") {
+            current_t = min(video_t, current_t + 10);
         }
         
-        if (current_t < 0) {
-            current_t = 0;
-        } else if (current_t > video_l) {
-            current_t = video_l;
-        }
-        
-        if (current_t >= start_t && current_t <= end_t) {
-            current_t = end_t;
-        }
+        current_t = skipOpening(current_t);
     }
     
-    string min = to_string(current_t / 60);
-    string sec = to_string(current_t % 60);
-    
-    if (min.size() == 1) {
-        answer += "0" + min + ":";
-    } else {
-        answer += min + ":";
-    }
-    
-    if (sec.size() == 1) {
-        answer += "0" + sec;
-    } else {
-        answer += sec;
-    }
-    
-    return answer;
+    return toTimeStr(current_t);
 }
