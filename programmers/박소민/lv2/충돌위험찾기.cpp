@@ -1,6 +1,6 @@
 #include <string>
 #include <vector>
-#include <map>
+#include <cstring>
 
 using namespace std;
 
@@ -22,6 +22,13 @@ map 사용 (좌표를 키로 사용, 매 턴이 끝날 때마다 clear(),
 2.5. 2.1, 2.2., 2.3 반복
 */
 
+/*
+리팩토링
+1. move 사용해서 불필요한 깊은 복사 지양
+2. memset을 활용해서 메모리 한 번에 초기화(덮어 씌우는 구조)
+3. hash map 대신에 배열을 사용하여 시간복잡도 O(N)으로 줄임
+*/
+
 struct Robot {
     int current_r;
     int current_c;
@@ -37,29 +44,37 @@ int solution(vector<vector<int>> points, vector<vector<int>> routes) {
     // 시작 점 초기화
     for (int i = 0; i < routes.size(); i++) {
         vector<pair<int, int>> targets;
-        
         for (int point_num : routes[i]) {
             targets.push_back({points[point_num-1][0], points[point_num-1][1]});
         }
         
-        robots.push_back({targets[0].first, targets[0].second, targets, 1, false});
+        robots.push_back({targets[0].first, targets[0].second, move(targets), 1, false});
     }
     
     int is_done_cnt = 0;
+    
+    int board[105][105];
+    
     while (true) {
-        map<pair<int, int>, int> position_cnt;
+        memset(board, 0, sizeof(board));
         
         // 1. 충돌 확인
         for (auto& robot : robots) {            
             if (robot.is_done) continue;
-
-            position_cnt[{robot.current_r, robot.current_c}]++;
+            board[robot.current_r][robot.current_c]++;
         }
         
         // 2. 충돌 갱신
-        for (auto& pos : position_cnt) {
-            if (pos.second >= 2) {
+        for (auto& robot : robots) {       
+            if (robot.is_done) continue;
+            
+            int r = robot.current_r;
+            int c = robot.current_c;
+            
+            if (board[r][c] >= 2) {
                 answer++;
+                
+                board[r][c] = 0;
             }
         }
         
