@@ -1,59 +1,44 @@
 #include <string>
 #include <vector>
 #include <queue>
-#include <algorithm>
+#include <array>
 #include <climits>
+#include <algorithm>
 
 using namespace std;
 
 /*
-설계
-
-bfs 알고리즘 (최단 거리를 확장한 최소 비용)
-// 근데 여기서 궁금한 점 - 과연 이게 best practice?
-동적 계획법 아니야? 왜냐하면 이건 간선에 비용이 있는 거잖아.
-bfs + 동적 계획법 (visited가 아닌 cost로)
-
-상태 차의 위치
-행동 상하좌우 (방향 전환하는 경우 비용, 전환하지 않는 경우 비용)
-
-1. bfs + 동적 계획법
-queue 큐, vector<vector<vector<int>>> cost
-cost가 3차원인 이유는 방향전환 시 비용 차이가 발생하므로 같은 위치를
-다른 방법으로 올 수 있기 때문
-{0, 0, 0} (행, 열, 현재 방향(상하 0/좌우 1))
-2. whlie문을 돌면서 n-1, n-1을 만나면 cost[n-1][n-1][방향]에 최소 비용 갱신
-3. min(cost[n-1][n-1][0], cost[n-1][n-1][1])
+다익스트라
+visited를 사용하지 않고 cost를 또 사용하는 이유
+if문을 사용해서 최소 비용인 경우에만 큐에 넣으므로 시간 복잡도가 개선된다.
 */
 
 int solution(vector<vector<int>> board) {
     int n = board.size();
-    queue<vector<int>> q;
+    priority_queue<array<int, 4>> q;
     
-    vector<vector<vector<int>>> cost(n, vector<vector<int>>(n, vector<int>(2, INT_MAX)));
+    vector<vector<vector<int>>> cost(n, vector<vector<int>>(n, vector<int>(2, -INT_MAX)));
     
     // 위: 0, 오: 1, 아: 0, 왼: 1 
     int dr[4] = {0, 1, 0, -1};
     int dc[4] = {1, 0, -1, 0};
     
-    q.push({0, 0, 1});
-    cost[0][0][1] = 0;
-    
-    q.push({0, 0, 0});
+    q.push({0, 0, 0, 0}); // 현재 비용, 행, 열, 방향
     cost[0][0][0] = 0;
     
+    q.push({0, 0, 0, 1});
+    cost[0][0][1] = 0;
+    
     while (!q.empty()) {
-        vector<int> c = q.front();
-        int cr = c[0];
-        int cc = c[1];
-        int cd = c[2];
+        auto [c_cost, cr, cc, cd] = q.top();
         q.pop();
         
         if (cr == n-1 && cc == n-1) {
-            continue;
+            return -c_cost;
         }
         
         for (int i = 0; i < 4; ++i) {
+            int n_cost;
             int nr = cr + dr[i];
             int nc = cc + dc[i];
             int nd = i % 2;
@@ -61,17 +46,20 @@ int solution(vector<vector<int>> board) {
             if (nr < 0 || nr > n-1 || nc < 0 || nc > n-1 ||
                board[nr][nc] == 1) continue;
             
-            if (cd == nd && cost[nr][nc][nd] > cost[cr][cc][cd] + 100) {
-                cost[nr][nc][nd] = cost[cr][cc][cd] + 100;
-                q.push({nr, nc, nd});
-            } else if (cd != nd && cost[nr][nc][nd] > cost[cr][cc][cd] + 600) {
-                cost[nr][nc][nd] = cost[cr][cc][cd] + 600;
-                q.push({nr, nc, nd});
+            if (cd == nd) {
+                n_cost = c_cost - 100;
+            } else if (cd != nd) {
+                n_cost = c_cost - 600;
+            }
+            
+            if (n_cost > cost[nr][nc][nd]) {
+                q.push({n_cost, nr, nc, nd});
+                cost[nr][nc][nd] = n_cost;
             }
         }
         
     }
     
     
-    return min(cost[n-1][n-1][0], cost[n-1][n-1][1]);
+    return -max(cost[n-1][n-1][0], cost[n-1][n-1][1]);
 }
