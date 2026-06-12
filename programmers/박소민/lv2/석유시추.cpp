@@ -18,57 +18,53 @@ int 최소열=해당 위치의 열, int 최대열=해당 위치의 열, int 석�
 int solution(vector<vector<int>> land) {
     int n = land.size();
     int m = land[0].size();
-    vector<int> results(m, 0);
     
-    int dr[4] = {0, 0, 1, -1};
-    int dc[4] = {1, -1, 0, 0};
+    vector<int> col_oil_sum(m, 0);
+    
+    const int dr[4] = {0, 0, 1, -1};
+    const int dc[4] = {1, -1, 0, 0};
+    
+    auto bfs = [&](int start_r, int start_c) {
+        queue<pair<int, int>> q;
+        q.push({start_r, start_c});
+        land[start_r][start_c] = 0;
+        
+        int min_col = start_c;
+        int max_col = start_c;
+        int oil_count = 0;
+        
+        while (!q.empty()) {
+            auto [cr, cc] = q.front();
+            q.pop();
+            
+            min_col = min(min_col, cc);
+            max_col = max(max_col, cc);
+            oil_count++;
+            
+            for (int i = 0; i < 4; i++) {
+                int nr = cr + dr[i];
+                int nc = cc + dc[i];
+                
+                if (nr >= 0 && nr < n && nc >= 0 && nc < m 
+                   && land[nr][nc] == 1) {
+                    q.push({nr, nc});
+                    land[nr][nc] = 0;
+                }
+            }
+        }
+        
+        for (int col = min_col; col <= max_col; col++) {
+            col_oil_sum[col] += oil_count;
+        }
+    };
     
     for (int r = 0; r < n; r++) {
         for (int c = 0; c < m; c++) {
             if (land[r][c] == 1) {
-                queue<pair<int, int>> q;
-                int min_col = c;
-                int max_col = c;
-                int cnt = 0;
-                q.push({r, c});
-                
-                // 처음 방문처리 할 것
-                land[r][c] = 0;
-                
-                while (!q.empty()) {
-                    pair<int, int> pos = q.front();
-                    q.pop();
-                    
-                    int cr = pos.first;
-                    int cc = pos.second;
-                    
-                    min_col = min(min_col, cc);
-                    max_col = max(max_col, cc);
-                    cnt++;
-                    
-                    for (int i = 0; i < 4; i++) {
-                        int nr = cr + dr[i];
-                        int nc = cc + dc[i];
-                        
-                        if (nr >= n || nr < 0 || nc >= m || nc < 0) continue;
-                        
-                        if (land[nr][nc] == 1) {
-                            q.push({nr, nc});
-                            land[nr][nc] = 0;
-                        }
-                    }
-                }
-                
-                for (int col = min_col; col <= max_col; col++) {
-                    results[col] += cnt;
-                }
-                
+                bfs(r, c);                
             }
         }
     }
     
-    // 최댓값 확인
-    auto answer = max_element(results.begin(), results.end());
-    
-    return *answer;
+    return *max_element(col_oil_sum.begin(), col_oil_sum.end());;
 }
