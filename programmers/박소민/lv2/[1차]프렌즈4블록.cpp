@@ -15,82 +15,91 @@ using namespace std;
 4. 1~3번을 해당 배열이 비었을 때까지 실행해. 
 */
 
-int solution(int m, int n, vector<string> board) {
-    int answer = 0;
-    
-    int dr[3] = {0, 1, 1};
-    int dc[3] = {1, 0, 1};
-    
-    while (true) {
-        vector<pair<int, int>> arr;
-        
-        // 2*2 찾아서 해당 배열 저장
-        for (int r = 0; r < m - 1; ++r) {
-            for (int c = 0; c < n - 1; ++c) {
-                if (board[r][c] == '0') continue;
-                
-                bool is_erase = true;
-                for (int i = 0; i < 3; ++i) {
-                    int nr = r + dr[i];
-                    int nc = c + dc[i];
-                    
-                    if (board[r][c] != board[nr][nc] || board[nr][nc] == '0') {
-                        is_erase = false;
-                        break;
-                    }
-                }
-                
-                if (is_erase) {
-                    arr.push_back({r, c});
-                }
-            }
-        }
-        
-        if (arr.empty()) break;
-        
-        // 지우기
-        for (auto& pos : arr) {
-            int r = pos.first;
-            int c = pos.second;
+const char EMPTY = '0';
+using Position = pair<int, int>;
+
+const int dr[4] = {0, 0, 1, 1};
+const int dc[4] = {0, 1, 0, 1};
+
+vector<Position> findMatchedBlocks(int m, int n, const vector<string>& board) {
+    vector<Position> matched;
+    for (int r = 0; r < m - 1; ++r) {
+        for (int c = 0; c < n - 1; ++c) {
+            char current = board[r][c];
+            if (current == EMPTY) continue;
             
-            if (board[r][c] != '0') {
-                board[r][c] = '0';
-                answer++;
-            }
-            
-            for (int i = 0; i < 3; ++i) {
+            bool is_match = true;
+            for (int i = 1; i < 4; ++i) {
                 int nr = r + dr[i];
                 int nc = c + dc[i];
-                
-                if (board[nr][nc] != '0') {
-                    board[nr][nc] = '0';
-                    answer++;
+                if (board[nr][nc] != current) {
+                    is_match = false;
+                    break;
                 }
             }
-        }
-        
-        // 밀어 넣기
-        for (int c = 0; c < n; ++c) {
-            queue<char> q;
             
-            // '0'이 아닌 값을 저장
-            for (int r = m - 1; r >= 0; --r) {
-                if (board[r][c] != '0') {
-                    q.push(board[r][c]);
-                }
-                
-                board[r][c] = '0';
-            }
-            
-            // 해당 열 갱신
-            for (int r = m - 1; r >= 0; --r) {
-                if (q.empty()) break;
-                
-                board[r][c] = q.front();
-                q.pop();
+            if (is_match) {
+                matched.push_back({r, c});
             }
         }
     }
     
-    return answer;
+    return matched;
+}
+
+int eraseBlocks(const vector<Position>& matched, vector<string>& board) {
+    int erased_count = 0;
+    
+    for (const auto& pos : matched) {
+        int r = pos.first;
+        int c = pos.second;
+        
+        for (int i = 0; i < 4; ++i) {
+            int nr = r + dr[i];
+            int nc = c + dc[i];
+            
+            if (board[nr][nc] != EMPTY) {
+                board[nr][nc] = EMPTY;
+                erased_count++;
+            }
+        }
+    }
+    
+    return erased_count;
+}
+
+void applyGravity(int m, int n, vector<string>& board) {
+    for (int c = 0; c < n; ++c) {
+        queue<char> surviving_blocks;
+        
+        for (int r = m - 1; r >= 0; --r) {
+            if (board[r][c] != EMPTY) {
+                surviving_blocks.push(board[r][c]);
+                board[r][c] = EMPTY;
+            }
+        }
+        
+        for (int r = m - 1; r >= 0 && !surviving_blocks.empty(); --r) {
+            board[r][c] = surviving_blocks.front();
+            surviving_blocks.pop();
+        }
+    }
+}
+
+int solution(int m, int n, vector<string> board) {
+    int total_erased = 0;
+    
+    while (true) {
+        vector<Position> matched = findMatchedBlocks(m, n, board);
+        
+        if (matched.empty()) {
+            break;
+        }
+        
+        total_erased += eraseBlocks(matched, board);
+        
+        applyGravity(m, n, board);
+    }
+    
+    return total_erased;
 }
