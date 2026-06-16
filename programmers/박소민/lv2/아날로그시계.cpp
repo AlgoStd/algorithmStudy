@@ -1,4 +1,3 @@
-#include <string>
 #include <vector>
 
 using namespace std;
@@ -27,58 +26,56 @@ l/(60)
 정답 = 1. + 2. + - 3.
 */
 
+constexpr int SECONDS_PER_MINUTE = 60;
+constexpr int MINUTES_PER_HOUR = 60;
+constexpr int HOURS_PER_HALF_DAY = 12;
+constexpr int HALF_DAY_SECONDS = HOURS_PER_HALF_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE;
+
 int solution(int h1, int m1, int s1, int h2, int m2, int s2) {
     int answer = 0;
     
-    int MOD = 12 * 60 * 60;
-    
     // 1. 1초당 가는 거리
-    int d_s = 1 * 12 * 60;
-    int d_m = 1 * 12;
-    int d_h = 1;
+    constexpr int d_h = 1;
+    constexpr int d_m = 1 * 12;
+    constexpr int d_s = 1 * 12 * 60;
+    
+    // 2. 시작 시간과 끝 시간
+    const int start_time = h1 * 60 * 60 + m1 * 60 + s1;
+    const int end_time = h2 * 60 * 60 + m2 * 60 + s2;
     
     // 2. 시작 위치
-    int start_s = s1 * 12 * 60;
-    int start_m = m1 * 12 * 60 + s1 * d_m;
-    int start_h = (h1 % 12) * 60 * 60 + (m1 * 60 + s1) * d_h;
-    
-    // 3, 시작 시간과 끝 시간
-    int start_time = h1 * 60 * 60 + m1 * 60 + s1;
-    int end_time = h2 * 60 * 60 + m2 * 60 + s2;
-    
-    int t = 0;
+    int start_s = s1 * d_s;
+    int start_m = (m1 * 60 + s1) * d_m;
+    int start_h = ((h1 % 12) * 60 * 60 + m1 * 60 + s1) * d_h;
     
     // 엣지케이스 (시침, 분침, 초침이 모두 만나는 경우 00시, 12시)
-    // 중복 되므로 미리 빼준다.
-    if ((h1 == 0 || h1 == 12) && m1 == 0 && s1 == 0) {
+    // 미리 더해준다.
+    if (start_time == 0 || start_time == HALF_DAY_SECONDS) {
         answer++;
     }
     
-    while (start_time + t < end_time) {        
+    for (int t = 0; start_time + t < end_time; ++t) {        
         // 1) 1초 전의 시침, 초침, 분침
-        int curr_h = (start_h + d_h * t) % MOD;
-        int curr_m = (start_m + d_m * t) % MOD;
-        int curr_s = (start_s + d_s * t) % MOD;
+        const int curr_h = (start_h + d_h * t) % HALF_DAY_SECONDS;
+        const int curr_m = (start_m + d_m * t) % HALF_DAY_SECONDS;
+        const int curr_s = (start_s + d_s * t) % HALF_DAY_SECONDS;
     
         // 2) 1초 후의 시침, 초침, 분침
-        int next_h = curr_h + d_h;
-        int next_m = curr_m + d_m;
-        int next_s = curr_s + d_s;
+        const int next_h = curr_h + d_h;
+        const int next_m = curr_m + d_m;
+        const int next_s = curr_s + d_s;
         
         // 3) 1초 전후의 초침과 시침, 초침과 분침 대소 비교
-        bool cross_hs = curr_h > curr_s && next_h <= next_s;
-        bool cross_ms = curr_m > curr_s && next_m <= next_s;
+        const bool cross_hs = curr_h > curr_s && next_h <= next_s;
+        const bool cross_ms = curr_m > curr_s && next_m <= next_s;
         
         if (cross_hs) answer++;
         if (cross_ms) answer++;
         
         // 4) 엣지 케이스 : 시침, 초침, 분침이 모두 만나는 경우 answer--
-        if (next_h == MOD && next_m == MOD && next_s == MOD) {
+        if (next_h == HALF_DAY_SECONDS && next_m == HALF_DAY_SECONDS && next_s == HALF_DAY_SECONDS) {
             answer--;
         }
-        
-        // 5) 1초 갱신
-        t++;
     }
     
     return answer;
