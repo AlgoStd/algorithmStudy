@@ -1,123 +1,56 @@
-#include <string>
 #include <vector>
 #include <algorithm>
 
 using namespace std;
 
 /*
-dfs 백트래킹 (bfs로하면 공간복잡도 터짐 + 관리하기 힘듦)
+이 문제는 dfs + 백트래킹으로 사용. (모든 경우의 수를 둘러봐야 하므로 + bfs를 사용하면 공간복잡도가 커지므로)
+
+1. 필요한 변수 현재 red, 현재 blue, 목표 red, 목표 blue, 방문 red 배열, 방문 blue 배열, 최소 턴의 수
+2. dfs로 구현
+- 종료 조건 : red == 목표 red, blue == 목표 blue
+1) red만 이미 목표 지점에 와 있는 경우
+blue만 이동 후 dfs
+2) blue만 이미 목표 지점에 와 있는 경우
+red만 이동 후 dfs
+3) 둘 다 아닌 경우
+red 이동 -> blue 이동 후 dfs
+(이 때 red와 blue가 교차하지 않도록 분기처리)
+3. 최소 턴 반환. (답이 나오지 않는다면 0을 반환)
+
+이동하는 조건 (공통)
+1. 배열 범위 안에 있는가?
+2. 이미 방문하였는가?
+3. 벽인가?
+4. 둘 중 하나만 목표 지점에 도달한 경우 -> 서로의 지점으로 가려고 하는가?
+5. 둘 다 목표 지점에 도달하지 못한 경우 -> 교차하지 않았는가?, 서로 같은 지점으로 가려고 하는가?
 */
+
+using Point = pair<int, int>;
 
 constexpr int dr[4] = {0, 0, 1, -1};
 constexpr int dc[4] = {1, -1, 0, 0};
-
-void dfs(vector<vector<int>>& maze, vector<vector<int>>& red_visited, vector<vector<int>>& blue_visited, pair<int, int> red, const pair<int, int> end_red, pair<int, int> blue, const pair<int, int> end_blue, int turn, int& min_turn) {
-    const int n = maze.size();
-    const int m = maze[0].size();
-    
-    // 1. 둘 다 도착지 -> 반환
-    if (red == end_red && blue == end_blue) {
-        min_turn = min(turn, min_turn);
-        return;
-    }
-    
-    // 2. red만 도착지
-    else if (red == end_red && blue != end_blue) {
-        // blue 처리
-        for (int j = 0; j < 4; ++j) {
-            int bnr = blue.first + dr[j];
-            int bnc = blue.second + dc[j];
-            pair<int, int> n_blue = {bnr, bnc};
-
-            if (bnr < 0 || bnr >= n || bnc < 0 || bnc >= m) continue;
-            if (blue_visited[bnr][bnc] || n_blue == red ||
-                maze[bnr][bnc] == 5) continue;
-
-            blue_visited[bnr][bnc] = 1;
-            dfs(maze, red_visited, blue_visited, red, end_red, n_blue, end_blue, turn + 1, min_turn);
-            blue_visited[bnr][bnc] = 0;
-        }
-    }
-    
-    // 3. blue만 도착지
-    else if (red != end_red && blue == end_blue) {
-        // red 처리
-        for (int i = 0; i < 4; ++i) {
-            int rnr = red.first + dr[i];
-            int rnc = red.second + dc[i];
-            pair<int, int> n_red = {rnr, rnc};
-
-            if (rnr < 0 || rnr >= n || rnc < 0 || rnc >= m) continue;
-            if (red_visited[rnr][rnc] || n_red == blue ||
-                maze[rnr][rnc] == 5) continue;
-
-            red_visited[rnr][rnc] = 1;
-
-            dfs(maze, red_visited, blue_visited, n_red, end_red, blue, end_blue, turn + 1, min_turn);
-
-            red_visited[rnr][rnc] = 0;
-        }
-    }
-    
-    // 4. 기타 남은 케이스
-    else {
-        // 1. red 먼저 처리
-        for (int i = 0; i < 4; ++i) {
-            int rnr = red.first + dr[i];
-            int rnc = red.second + dc[i];
-            pair<int, int> n_red = {rnr, rnc};
-
-            if (rnr < 0 || rnr >= n || rnc < 0 || rnc >= m) continue;
-            if (red_visited[rnr][rnc] || maze[rnr][rnc] == 5) continue;
-
-            red_visited[rnr][rnc] = 1;
-
-            // 2. blue 처리
-            for (int j = 0; j < 4; ++j) {
-                int bnr = blue.first + dr[j];
-                int bnc = blue.second + dc[j];
-                pair<int, int> n_blue = {bnr, bnc};
-
-                if (bnr < 0 || bnr >= n || bnc < 0 || bnc >= m) continue;
-                if (blue_visited[bnr][bnc] || n_blue == n_red ||
-                    maze[bnr][bnc] == 5) continue;
-                
-                // 교차하는 경우 제외
-                if (n_blue == red && n_red == blue) continue;
-
-                blue_visited[bnr][bnc] = 1;
-                dfs(maze, red_visited, blue_visited, n_red, end_red, n_blue, end_blue, turn + 1, min_turn);
-                blue_visited[bnr][bnc] = 0;
-            }
-
-            red_visited[rnr][rnc] = 0;
-        }
-    }
-
-    return;
-}
 
 int solution(vector<vector<int>> maze) {
     const int n = maze.size();
     const int m = maze[0].size();
     
-    pair<int, int> start_red; pair<int, int> start_blue; 
-    pair<int, int> end_red; pair<int, int> end_blue;
-    
+    Point end_red, end_blue;
     int min_turn = 1e9;
     
-    vector<vector<int>> red_visited(n, vector<int>(m, 0));
-    vector<vector<int>> blue_visited(n, vector<int>(m, 0));
+    vector<vector<bool>> red_visited(n, vector<bool>(m, false));
+    vector<vector<bool>> blue_visited(n, vector<bool>(m, false));
     
-    // 1. 시작, 끝 점 초기화
+    Point start_red, start_blue;
+    
     for (int r = 0; r < n; ++r) {
         for (int c = 0; c < m; ++c) {
             if (maze[r][c] == 1) {
                 start_red = {r, c};
-                red_visited[r][c] = 1;
+                red_visited[r][c] = true;
             } else if (maze[r][c] == 2) {
                 start_blue = {r, c};
-                blue_visited[r][c] = 1;
+                blue_visited[r][c] = true;
             } else if (maze[r][c] == 3) {
                 end_red = {r, c};
             } else if (maze[r][c] == 4) {
@@ -126,8 +59,61 @@ int solution(vector<vector<int>> maze) {
         }
     }
     
-    // 2. dfs + 백트래킹
-    dfs(maze, red_visited, blue_visited, start_red, end_red, start_blue, end_blue, 0, min_turn);
+    auto is_valid = [&](Point p) {
+        return p.first >= 0 && p.first < n &&
+            p.second >= 0 && p.second < m &&
+            maze[p.first][p.second] != 5;
+    };
     
-    return min_turn != 1e9 ? min_turn : 0;
+    auto dfs = [&](auto& self, Point red, Point blue, int turn) -> void {
+        if (turn >= min_turn) return;
+        
+        if (red == end_red && blue == end_blue) {
+            min_turn = min(min_turn, turn);
+            return;
+        }
+        
+        vector<Point> next_reds, next_blues;
+        
+        if (red == end_red) {
+            next_reds.push_back(red);
+        } else {
+            for (int i = 0; i < 4; ++i) {
+                Point nr = {red.first + dr[i], red.second + dc[i]};
+                if (is_valid(nr) && !red_visited[nr.first][nr.second]) next_reds.push_back(nr);
+            }
+        }
+        
+        if (blue == end_blue) {
+            next_blues.push_back(blue);
+        } else {
+            for (int i = 0; i < 4; ++i) {
+                Point nr = {blue.first + dr[i], blue.second + dc[i]};
+                if (is_valid(nr) && !blue_visited[nr.first][nr.second]) next_blues.push_back(nr);
+            }
+        }
+        
+        for (Point nr : next_reds) {
+            for (Point nb : next_blues) {
+                if (nr == nb) continue;
+                if (nr == blue && nb == red) continue;
+                
+                bool red_moved = (red != end_red);
+                bool blue_moved = (blue != end_blue);
+                
+                if (red_moved) red_visited[nr.first][nr.second] = true;
+                if (blue_moved) blue_visited[nb.first][nb.second] = true;
+                
+                self(self, nr, nb, turn + 1);
+                
+                if (red_moved) red_visited[nr.first][nr.second] = false;
+                if (blue_moved) blue_visited[nb.first][nb.second] = false;
+                
+            }
+        }
+    };
+    
+    dfs(dfs, start_red, start_blue, 0);
+    
+    return min_turn == 1e9 ? 0 : min_turn;
 }
