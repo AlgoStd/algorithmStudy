@@ -1,50 +1,26 @@
 function solution(arr) {
-  const n = arr.length;
+  const answer = [0, 0];
 
-  let totalOne = 0;
-  let totalZero = 0;
+  const compress = (r, c, size) => {
+    const first = arr[r][c];
 
-  const dfs = (d, cr, cc) => {
-    const val = arr[cr][cc];
-
-    if (d === 1) {
-      if (arr[cr][cc] === 1) {
-        totalOne++;
-      } else {
-        totalZero++;
-      }
-      return;
-    }
-
-    let allSame = true;
-
-    for (let r = cr; r < cr + d; ++r) {
-      for (let c = cc; c < cc + d; ++c) {
-        // 처음만 들어가도록!
-        if (val !== arr[r][c]) {
-          allSame = false;
-          const nd = Math.floor(d / 2);
-          dfs(nd, cr, cc);
-          dfs(nd, cr + nd, cc);
-          dfs(nd, cr, cc + nd);
-          dfs(nd, cr + nd, cc + nd);
+    for (let i = r; i < r + size; i++) {
+      for (let j = c; j < c + size; j++) {
+        if (arr[i][j] !== first) {
+          const half = size / 2;
+          compress(r, c, half);
+          compress(r, c + half, half);
+          compress(r + half, c, half);
+          compress(r + half, c + half, half);
           return;
         }
       }
     }
 
-    if (allSame) {
-      if (val === 1) {
-        totalOne++;
-      } else {
-        totalZero++;
-      }
-
-      return;
-    }
+    answer[first]++;
   };
 
-  dfs(n, 0, 0);
+  compress(0, 0, arr.length);
 
-  return [totalZero, totalOne];
+  return answer;
 }
