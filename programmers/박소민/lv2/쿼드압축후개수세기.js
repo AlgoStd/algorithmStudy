@@ -4,7 +4,9 @@ function solution(arr) {
   let totalOne = 0;
   let totalZero = 0;
 
-  const dfs = (d, val, cr, cc) => {
+  const dfs = (d, cr, cc) => {
+    const val = arr[cr][cc];
+
     if (d === 1) {
       if (arr[cr][cc] === 1) {
         totalOne++;
@@ -22,10 +24,10 @@ function solution(arr) {
         if (val !== arr[r][c]) {
           allSame = false;
           const nd = Math.floor(d / 2);
-          dfs(nd, val, cr, cc);
-          dfs(nd, arr[cr + nd][cc], cr + nd, cc);
-          dfs(nd, arr[cr][cc + nd], cr, cc + nd);
-          dfs(nd, arr[cr + nd][cc + nd], cr + nd, cc + nd);
+          dfs(nd, cr, cc);
+          dfs(nd, cr + nd, cc);
+          dfs(nd, cr, cc + nd);
+          dfs(nd, cr + nd, cc + nd);
           return;
         }
       }
@@ -42,7 +44,7 @@ function solution(arr) {
     }
   };
 
-  dfs(n, arr[0][0], 0, 0);
+  dfs(n, 0, 0);
 
   return [totalZero, totalOne];
 }
