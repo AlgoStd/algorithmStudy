@@ -1,32 +1,24 @@
-/*
-    const language = ['cpp', 'java', 'python', '-'];
-    const job = ['backend', 'frontend', '-'];
-    const degree = ['junior', 'senior', '-'];
-    const food = ['chicken', 'pizza', '-'];
-*/
-
 function solution(info, query) {
   var answer = [];
   const people = new Map();
 
   for (const person of info) {
-    const personInfo = person.split(" ");
-    const score = Number(personInfo[4]);
+    const arr = person.split(" ");
+    const score = Number(arr[4]);
 
     const keys = [];
+    const temp = [];
 
-    const current = [];
-
-    const dfs = (idx) => {
-      if (idx === 4) {
-        keys.push(current.join("&&"));
+    const dfs = (depth) => {
+      if (depth === 4) {
+        keys.push(temp.join("&&"));
         return;
       }
 
-      for (const val of [personInfo[idx], "-"]) {
-        current.push(val);
-        dfs(idx + 1);
-        current.pop();
+      for (const key of [arr[depth], "-"]) {
+        temp.push(key);
+        dfs(depth + 1);
+        temp.pop();
       }
     };
 
@@ -41,36 +33,39 @@ function solution(info, query) {
     }
   }
 
-  for (const [key, value] of people) {
-    value.sort((a, b) => a - b);
+  // 이진 탐색을 위한 오름차순 정렬
+  for (const scores of people.values()) {
+    scores.sort((a, b) => a - b);
   }
 
-  for (const current of query) {
-    const arr = current.split(" ");
-    const str = `${arr[0]}&&${arr[2]}&&${arr[4]}&&${arr[6]}`;
-    const targetScore = Number(arr[7]);
+  for (const qStr of query) {
+    const qArr = qStr.split(" ");
+    const key = `${qArr[0]}&&${qArr[2]}&&${qArr[4]}&&${qArr[6]}`;
+    const targetScore = Number(qArr[7]); // 주의! 정수로 변환
 
-    const values = people.get(str);
-
-    if (!values) {
+    // 엣지케이스
+    if (!people.has(key)) {
       answer.push(0);
       continue;
     }
 
+    const scores = people.get(key);
+
+    const len = scores.length;
     let start = 0;
-    let end = values.length;
+    let end = len; // 오답 포인트
 
     while (start < end) {
       const mid = Math.floor((start + end) / 2);
 
-      if (targetScore > values[mid]) {
-        start = mid + 1;
+      if (scores[mid] >= targetScore) {
+        end = mid; // 오답 포인트
       } else {
-        end = mid;
+        start = mid + 1;
       }
     }
 
-    answer.push(values.length - start);
+    answer.push(len - start);
   }
 
   return answer;
