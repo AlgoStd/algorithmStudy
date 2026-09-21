@@ -1,29 +1,29 @@
 def solution(a):
     n = len(a)
-    answer = 0
     
-    left_arr = [0] * n
-    right_arr = [0] * n
+    if n == 2:
+        return n
+    
+    answer = 2
     
     left_min = a[0]
-    right_min = a[-1]
-     
-    for i in range(n):
-        if left_min >= a[i]:
-            left_arr[i] = a[i]
-            left_min = a[i]
-        else:
-            left_arr[i] = left_min
+    right_min = a[n - 1]
     
-    for i in range(n-1, -1, -1):
-        if right_min >= a[i]:
-            right_arr[i] = a[i]
-            right_min = a[i]
-        else:
-            right_arr[i] = right_min
+    left = 1
+    right = n - 2
+    
+    while left <= right:
+        if left_min < right_min:
+            if a[right] < right_min:
+                answer += 1
+                right_min = a[right]
             
-    for i in range(n):
-        if left_arr[i] >= a[i] or right_arr[i] >= a[i]:
-            answer += 1
+            right -= 1
+        else:
+            if a[left] < left_min:
+                answer += 1
+                left_min = a[left]
+            
+            left += 1
     
     return answer
