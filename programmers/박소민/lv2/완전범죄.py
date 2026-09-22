@@ -1,4 +1,4 @@
-# 2번 방식 : 1차원 배열 + 바꿔치기 풀기
+# 3번 방식 : 1차원 배열 + 역순
 
 def solution(info, n, m):
     length = len(info)
@@ -15,7 +15,8 @@ def solution(info, n, m):
         # 새로운 배열 선언
         next_dp = [float('inf')] * n
         
-        for j in range(n):
+        # 역순 순회 + A 훔치는 경우부터 (dp 오염 안되게)
+        for j in range(n-1, -1, -1):
             if dp[j] == float('inf'):
                 continue
             
@@ -23,14 +24,14 @@ def solution(info, n, m):
             
             # A가 훔치는 경우 -> 이 부분이 이해가 안가 왜 prevB랑 비교해?
             if j + a < n:
-                next_dp[j + a] = min(next_dp[j + a], prevB)
+                dp[j + a] = min(dp[j + a], prevB)
                 
             # B가 훔치는 경우
             if prevB + b < m:
-                next_dp[j] = min(next_dp[j], prevB + b)
-        
-        # 새로운 배열로 갱신
-        dp = next_dp
+                dp[j] = prevB + b
+            # 넘는 경우 그 다음 순회 때 탐색할 수 없도로 양의 무한대로 갱신
+            else:
+                dp[j] = float('inf')
     
     for j in range(n):
         if dp[j] < m:
