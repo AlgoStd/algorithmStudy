@@ -1,7 +1,4 @@
 def solution(food):
-    answer = ''
+    left = ''.join(str(i) * (val // 2) for i, val in enumerate(food))
     
-    for i in range(len(food)):
-        answer += str(i) * (food[i] // 2)
-    
-    return answer + '0' + answer[::-1]
+    return left + '0' + left[::-1]
