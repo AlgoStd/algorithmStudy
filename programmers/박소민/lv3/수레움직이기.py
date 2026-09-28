@@ -1,13 +1,21 @@
-# dfs + 백트래킹
+# bfs + 비트마스킹
+# 참고 ) 방법 1 : dfs + 백트래킹
+
+from collections import deque
 
 def solution(maze):
     n = len(maze)
     m = len(maze[0])
-    answer = 0
+    
+    r_mask = 0
+    b_mask = 0
     
     for r in range(n):
         for c in range(m):
-            if maze[r][c] == 1:
+            if maze[r][c] == 5:
+                r_mask |= (1 << (r * m + c))
+                b_mask |= (1 << (r * m + c))
+            elif maze[r][c] == 1:
                 r_start = [r, c]
             elif maze[r][c] == 2:
                 b_start = [r, c]
@@ -16,30 +24,30 @@ def solution(maze):
             elif maze[r][c] == 4:
                 b_end = [r, c]
     
-    r_visited = [[False] * m for _ in range(n)]
-    b_visited = [[False] * m for _ in range(n)]
+    r_mask |= (1 << (r_start[0] * m + r_start[1]))
+    b_mask |= (1 << (b_start[0] * m + b_start[1]))
     
-    count = float('inf')
+    queue = deque()
+    queue.append([r_start, b_start, r_mask, b_mask, 0])
     
     dr = [0, 0, 1, -1]
     dc = [1, -1, 0, 0]
     
-    def can_go(nr, nc):
-        if nr < 0 or nr >= n or nc < 0 or nc >= m:
+    def can_go(r, c):
+        if r < 0 or r >= n or c < 0 or c >= m:
             return True
-        if maze[nr][nc] == 5:
+        if maze[r][c] == 5:
             return True
         return False
     
-    def dfs(r_pos, b_pos, cnt):
-        nonlocal count, r_visited, b_visited, dr, dc, r_end, b_end, r_start, b_start
+    while (queue):
+        [r_pos, b_pos, r_mask, b_mask, cnt] = queue.popleft()
         
         r_arrived = True if r_pos[0] == r_end[0] and r_pos[1] == r_end[1] else False
         b_arrived = True if b_pos[0] == b_end[0] and b_pos[1] == b_end[1] else False
         
         if r_arrived and b_arrived:
-            count = min(count, cnt)
-            return
+            return cnt
         
         # 파란색만 움직이는 경우
         elif r_arrived:
@@ -49,14 +57,17 @@ def solution(maze):
                 
                 if can_go(nr, nc):
                     continue
-                if b_visited[nr][nc]:
+                
+                ni = nr * m + nc
+                
+                if (b_mask & (1 << ni)) != 0:
                     continue
                 if nr == r_pos[0] and nc == r_pos[1]:
                     continue
+                    
+                nb_mask = b_mask | (1 << ni)
                 
-                b_visited[nr][nc] = True
-                dfs(r_pos, [nr, nc], cnt + 1)
-                b_visited[nr][nc] = False
+                queue.append([r_pos, [nr, nc], r_mask, nb_mask, cnt + 1])
         
         # 빨간색만 움직이는 경우
         elif b_arrived:
@@ -66,14 +77,17 @@ def solution(maze):
                 
                 if can_go(nr, nc):
                     continue
-                if r_visited[nr][nc]:
+                    
+                ni = nr * m + nc
+                
+                if (r_mask & (1 << ni)) != 0:
                     continue
                 if nr == b_pos[0] and nc == b_pos[1]:
                     continue
+                    
+                nr_mask = r_mask | (1 << ni)
                 
-                r_visited[nr][nc] = True
-                dfs([nr, nc], b_pos, cnt + 1)
-                r_visited[nr][nc] = False
+                queue.append([[nr, nc], b_pos, nr_mask, b_mask, cnt + 1])
         
         # 둘 다 아닌 경우
         else:
@@ -83,7 +97,10 @@ def solution(maze):
                 
                 if can_go(rnr, rnc):
                     continue
-                if r_visited[rnr][rnc]:
+                
+                rni = rnr * m + rnc
+                
+                if (r_mask & (1 << rni)) != 0:
                     continue
                 
                 for j in range(4):
@@ -92,22 +109,20 @@ def solution(maze):
                     
                     if can_go(bnr, bnc):
                         continue
-                    if b_visited[bnr][bnc]:
+                        
+                    bni = bnr * m + bnc
+                
+                    if (b_mask & (1 << bni)) != 0:
                         continue
                         
                     if rnr == bnr and rnc == bnc:
                         continue
                     if rnr == b_pos[0] and rnc == b_pos[1] and bnr == r_pos[0] and bnc == r_pos[1]:
                         continue
+                        
+                    nr_mask = r_mask | (1 << rni)
+                    nb_mask = b_mask | (1 << bni)
                     
-                    r_visited[rnr][rnc] = True
-                    b_visited[bnr][bnc] = True
-                    dfs([rnr, rnc], [bnr, bnc], cnt + 1)
-                    r_visited[rnr][rnc] = False
-                    b_visited[bnr][bnc] = False
+                    queue.append([[rnr, rnc], [bnr, bnc], nr_mask, nb_mask, cnt + 1])
     
-    r_visited[r_start[0]][r_start[1]] = True
-    b_visited[b_start[0]][b_start[1]] = True
-    dfs(r_start, b_start, 0)
-    
-    return 0 if count == float('inf') else count
+    return 0
