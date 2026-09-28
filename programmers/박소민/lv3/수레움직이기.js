@@ -1,127 +1,132 @@
+// 방법 2 : bfs + 비트마스킹
+
 function solution(maze) {
   const n = maze.length;
   const m = maze[0].length;
 
-  const rVisited = Array.from({ length: n }, () => Array(m).fill(false));
-  const bVisited = Array.from({ length: n }, () => Array(m).fill(false));
+  const queue = [];
+  let head = 0;
 
   let rStart;
   let bStart;
-
   let rEnd;
   let bEnd;
 
+  let rStartMask = 0;
+  let bStartMask = 0;
+
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < m; c++) {
-      if (maze[r][c] === 1) {
-        rStart = [r, c];
-      } else if (maze[r][c] === 2) {
-        bStart = [r, c];
-      } else if (maze[r][c] === 3) {
-        rEnd = [r, c];
-      } else if (maze[r][c] === 4) {
-        bEnd = [r, c];
+      const idx = r * m + c;
+
+      if (maze[r][c] === 5) {
+        rStartMask |= 1 << idx;
+        bStartMask |= 1 << idx;
       }
+
+      if (maze[r][c] === 1) rStart = [r, c];
+      else if (maze[r][c] === 2) bStart = [r, c];
+      else if (maze[r][c] === 3) rEnd = [r, c];
+      else if (maze[r][c] === 4) bEnd = [r, c];
     }
   }
+
+  rStartMask |= 1 << (rStart[0] * m + rStart[1]);
+  bStartMask |= 1 << (bStart[0] * m + bStart[1]);
+
+  queue.push([rStart, bStart, rStartMask, bStartMask, 0]);
 
   const dr = [0, 0, 1, -1];
   const dc = [1, -1, 0, 0];
 
-  let minCnt = Infinity;
+  while (head < queue.length) {
+    const [rPos, bPos, rMask, bMask, cnt] = queue[head++];
 
-  const dfs = (rp, bp, cnt) => {
-    if (cnt >= minCnt) return;
+    const rArrived = rPos[0] === rEnd[0] && rPos[1] === rEnd[1] ? true : false;
+    const bArrived = bPos[0] === bEnd[0] && bPos[1] === bEnd[1] ? true : false;
 
-    const rArrived = rp[0] === rEnd[0] && rp[1] === rEnd[1] ? true : false;
-    const bArrived = bp[0] === bEnd[0] && bp[1] === bEnd[1] ? true : false;
+    if (rArrived && bArrived) return cnt;
 
-    if (rArrived && bArrived) {
-      minCnt = Math.min(minCnt, cnt);
-      return;
-    }
-
-    // 1. 빨간색이 이미 도착
-    else if (rArrived) {
+    // 1. 파란색만 이동
+    if (rArrived) {
       for (let i = 0; i < 4; i++) {
-        const nbr = bp[0] + dr[i];
-        const nbc = bp[1] + dc[i];
+        const nr = bPos[0] + dr[i];
+        const nc = bPos[1] + dc[i];
 
-        if (
-          nbr >= 0 &&
-          nbr < n &&
-          nbc >= 0 &&
-          nbc < m &&
-          maze[nbr][nbc] !== 5 &&
-          !bVisited[nbr][nbc] &&
-          (nbr !== rp[0] || nbc !== rp[1])
-        ) {
-          bVisited[nbr][nbc] = true;
-          dfs(rp, [nbr, nbc], cnt + 1);
-          bVisited[nbr][nbc] = false;
-        }
+        if (nr < 0 || nr >= n || nc < 0 || nc >= m) continue;
+
+        const ni = nr * m + nc;
+
+        if ((bMask & (1 << ni)) !== 0) continue;
+
+        if (nr === rPos[0] && nc === rPos[1]) continue;
+
+        const nextMask = bMask | (1 << ni);
+        queue.push([rPos, [nr, nc], rMask, nextMask, cnt + 1]);
       }
     }
 
-    // 2. 파란색이 이미 도착
+    // 2. 빨간색만 이동
     else if (bArrived) {
       for (let i = 0; i < 4; i++) {
-        const nrr = rp[0] + dr[i];
-        const nrc = rp[1] + dc[i];
+        const nr = rPos[0] + dr[i];
+        const nc = rPos[1] + dc[i];
 
-        if (
-          nrr >= 0 &&
-          nrr < n &&
-          nrc >= 0 &&
-          nrc < m &&
-          maze[nrr][nrc] !== 5 &&
-          !rVisited[nrr][nrc] &&
-          (nrr !== bp[0] || nrc !== bp[1])
-        ) {
-          rVisited[nrr][nrc] = true;
-          dfs([nrr, nrc], bp, cnt + 1);
-          rVisited[nrr][nrc] = false;
-        }
+        if (nr < 0 || nr >= n || nc < 0 || nc >= m) continue;
+
+        const ni = nr * m + nc;
+
+        if ((rMask & (1 << ni)) !== 0) continue;
+
+        if (nr === bPos[0] && nc === bPos[1]) continue;
+
+        const nextMask = rMask | (1 << ni);
+        queue.push([[nr, nc], bPos, nextMask, bMask, cnt + 1]);
       }
     }
 
-    // 3. 둘 다 도착하지 않은 경우
+    // 3. 둘 다 이동
     else {
       for (let i = 0; i < 4; i++) {
-        const nrr = rp[0] + dr[i];
-        const nrc = rp[1] + dc[i];
+        const rnr = rPos[0] + dr[i];
+        const rnc = rPos[1] + dc[i];
 
-        if (nrr < 0 || nrr >= n || nrc < 0 || nrc >= m) continue;
-        if (rVisited[nrr][nrc]) continue;
-        if (maze[nrr][nrc] === 5) continue;
+        if (rnr < 0 || rnr >= n || rnc < 0 || rnc >= m) continue;
+
+        const rni = rnr * m + rnc;
+
+        if ((rMask & (1 << rni)) !== 0) continue;
+
+        const nextRMask = rMask | (1 << rni);
 
         for (let j = 0; j < 4; j++) {
-          const nbr = bp[0] + dr[j];
-          const nbc = bp[1] + dc[j];
+          const bnr = bPos[0] + dr[j];
+          const bnc = bPos[1] + dc[j];
 
-          if (nbr < 0 || nbr >= n || nbc < 0 || nbc >= m) continue;
-          if (bVisited[nbr][nbc]) continue;
-          if (maze[nbr][nbc] === 5) continue;
+          if (bnr < 0 || bnr >= n || bnc < 0 || bnc >= m) continue;
 
-          // 가려고 하는 곳이 같은 경우
-          if (nbr === nrr && nbc === nrc) continue;
-          // 서로 교차하는 경우 (수레끼리 자리를 바꾸며?)
-          if (nbr === rp[0] && nbc === rp[1] && nrr === bp[0] && nrc === bp[1])
+          const bni = bnr * m + bnc;
+
+          if ((bMask & (1 << bni)) !== 0) continue;
+
+          const nextBMask = bMask | (1 << bni);
+
+          // 교차하는 경우
+          if (
+            bnr === rPos[0] &&
+            bnc === rPos[1] &&
+            rnr === bPos[0] &&
+            rnc === bPos[1]
+          )
             continue;
+          // 같은 곳으로 가는 경우
+          if (bnr === rnr && bnc === rnc) continue;
 
-          rVisited[nrr][nrc] = true;
-          bVisited[nbr][nbc] = true;
-          dfs([nrr, nrc], [nbr, nbc], cnt + 1);
-          rVisited[nrr][nrc] = false;
-          bVisited[nbr][nbc] = false;
+          queue.push([[rnr, rnc], [bnr, bnc], nextRMask, nextBMask, cnt + 1]);
         }
       }
     }
-  };
+  }
 
-  rVisited[rStart[0]][rStart[1]] = true;
-  bVisited[bStart[0]][bStart[1]] = true;
-  dfs(rStart, bStart, 0);
-
-  return minCnt === Infinity ? 0 : minCnt;
+  return 0;
 }
