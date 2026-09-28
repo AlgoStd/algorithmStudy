@@ -10,41 +10,30 @@ m번의 시도 -> 서로 다른 5개의 정수를 입력 -> 몇 개가 비밀 �
 
 function solution(n, q, ans) {
   const m = q.length;
-
   var answer = 0;
-
   const passwords = [];
-  const visited = Array(n + 1).fill(false); // 1-index
 
-  const is_valid = () => {
-    for (let i = 0; i < m; i++) {
-      let sameNum = 0;
-      const query = q[i];
-
-      for (const val of query) {
-        if (passwords.includes(val)) sameNum++;
-      }
-
-      if (sameNum !== ans[i]) return false;
-    }
-
-    return true;
-  };
+  const qSets = q.map((val) => new Set(val));
 
   const dfs = (num, len) => {
     if (len === 5) {
-      if (is_valid()) answer++;
+      for (let i = 0; i < m; i++) {
+        let sameNum = 0;
+
+        for (let j = 0; j < 5; j++) {
+          if (qSets[i].has(passwords[j])) sameNum++;
+        }
+
+        if (sameNum !== ans[i]) return;
+      }
+      answer++;
       return;
     }
 
     for (let i = num; i <= n; i++) {
-      if (!visited[i]) {
-        visited[i] = true;
-        passwords.push(i);
-        dfs(i + 1, len + 1);
-        visited[i] = false;
-        passwords.pop();
-      }
+      passwords.push(i);
+      dfs(i + 1, len + 1);
+      passwords.pop();
     }
   };
 
