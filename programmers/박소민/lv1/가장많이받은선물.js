@@ -1,55 +1,38 @@
 function solution(friends, gifts) {
   const n = friends.length;
-  var answer = 0;
 
-  // 해시맵을 통해서 friend에 따른 인덱스 생성
-  const friendsDict = new Map();
+  // 1. 초기화
+  const name2idx = new Map(friends.map((name, idx) => [name, idx]));
+  const giftRecord = Array.from({ length: n }, () => Array(n).fill(0));
+  const giftScore = Array(n).fill(0);
+  const nextGifts = Array(n).fill(0);
 
-  for (let i = 0; i < n; i++) {
-    friendsDict.set(friends[i], i);
-  }
-
-  const friendsMap = Array.from({ length: n }, () => Array(n).fill(0));
-  const friendsNum = Array(n).fill(0);
-
+  // 2. 기록 연산
   for (const gift of gifts) {
-    const [A, B] = gift.split(" ");
+    const [giver, receiver] = gift.split(" ");
 
-    const ai = friendsDict.get(A);
-    const bi = friendsDict.get(B);
+    const gIdx = name2idx.get(giver);
+    const rIdx = name2idx.get(receiver);
 
-    friendsMap[ai][bi]++;
-    friendsMap[bi][ai]--;
+    giftRecord[gIdx][rIdx]++;
+    giftRecord[rIdx][gIdx]--;
 
-    friendsNum[ai]++;
-    friendsNum[bi]--;
+    giftScore[gIdx]++;
+    giftScore[rIdx]--;
   }
-
-  const result = Array(n).fill(0);
 
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
-      if (friendsMap[i][j] !== 0) {
-        const nextFriend = friendsMap[i][j] > 0 ? i : j;
-        result[nextFriend]++;
+      if (giftRecord[i][j] > 0) {
+        nextGifts[i]++;
+      } else if (giftRecord[i][j] < 0) {
+        nextGifts[j]++;
       } else {
-        const iNum = friendsNum[i];
-        const jNum = friendsNum[j];
-
-        if (iNum === jNum) continue;
-        else {
-          const nextFriend = iNum > jNum ? i : j;
-          result[nextFriend]++;
-        }
+        if (giftScore[i] > giftScore[j]) nextGifts[i]++;
+        else if (giftScore[i] < giftScore[j]) nextGifts[j]++;
       }
     }
   }
 
-  for (const val of result) {
-    if (val > answer) {
-      answer = val;
-    }
-  }
-
-  return answer;
+  return Math.max(...nextGifts);
 }
