@@ -1,33 +1,31 @@
-/*
-설계
-시간복잡도 n^2 가능
-그리디
-*/
-
 function solution(players, m, k) {
-  // 총 증설 횟수
   var answer = 0;
+  let servers = 0;
 
-  // 시간 관리를 위한 서버 배열
-  const servers = [];
-  let head = 0;
-  // 현재 증설된 서버의 수를 나타내기 위한 변수
-  let currServer = 0;
+  // 시간이 24이므로 24길이의 배열 선언 후 만료되는 서버 기록
+  const expired = Array(24).fill(0);
 
-  for (const player of players) {
-    for (let i = head; i < currServer + head; i++) {
-      servers[i]--;
-      if (servers[i] === 0) {
-        head++;
-        currServer--;
-      }
+  for (let i = 0; i < 24; i++) {
+    const player = players[i];
+
+    // 만료되는 서버 제거
+    servers -= expired[i];
+
+    // 현재 증설이 필요한 서버의 수
+    const needs = Math.floor(player / m) - servers;
+
+    // 증설이 필요하지 않다면 continue
+    if (needs <= 0) continue;
+
+    // 만료되는 시간 기록
+    // 주의 -> 인덱스 초과 오류 if 문으로 제어
+    if (i + k < 24) {
+      expired[i + k] += needs;
     }
 
-    while (player >= m + m * currServer) {
-      answer++;
-      currServer++;
-      servers.push(k);
-    }
+    // 서버 증설
+    servers += needs;
+    answer += needs;
   }
 
   return answer;
