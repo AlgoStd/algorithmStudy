@@ -23,23 +23,42 @@ function solution(rows, columns, queries) {
     const r2 = x2 - 1;
     const c2 = y2 - 1;
 
-    const temp = [];
+    // 최솟값, 이전값, 다음값 변수 생성
+    let prev = graph[r1 + 1][c1];
+    let next;
+    let minVal = prev;
 
-    for (let c = c1; c <= c2; c++) temp.push(graph[r1][c]);
-    for (let r = r1 + 1; r <= r2 - 1; r++) temp.push(graph[r][c2]);
-    for (let c = c2; c >= c1; c--) temp.push(graph[r2][c]);
-    for (let r = r2 - 1; r >= r1 + 1; r--) temp.push(graph[r][c1]);
+    for (let c = c1; c <= c2; c++) {
+      // 1. 현재 값 next에 저장
+      next = graph[r1][c];
 
-    // 마지막 값 빼기
-    temp.unshift(temp.pop());
-    const minVal = Math.min(...temp);
-    let head = 0;
+      // 2. 이전 값 회전해서 넣기
+      graph[r1][c] = prev;
 
-    // 회전하면서 넣어주기
-    for (let c = c1; c <= c2; c++) graph[r1][c] = temp[head++];
-    for (let r = r1 + 1; r <= r2 - 1; r++) graph[r][c2] = temp[head++];
-    for (let c = c2; c >= c1; c--) graph[r2][c] = temp[head++];
-    for (let r = r2 - 1; r >= r1 + 1; r--) graph[r][c1] = temp[head++];
+      // 3. 이전 값 갱신
+      prev = next;
+
+      // 이전값과 최솟값 갱신
+      minVal = minVal > prev ? prev : minVal;
+    }
+    for (let r = r1 + 1; r <= r2 - 1; r++) {
+      next = graph[r][c2];
+      graph[r][c2] = prev;
+      prev = next;
+      minVal = minVal > prev ? prev : minVal;
+    }
+    for (let c = c2; c >= c1; c--) {
+      next = graph[r2][c];
+      graph[r2][c] = prev;
+      prev = next;
+      minVal = minVal > prev ? prev : minVal;
+    }
+    for (let r = r2 - 1; r >= r1 + 1; r--) {
+      next = graph[r][c1];
+      graph[r][c1] = prev;
+      prev = next;
+      minVal = minVal > prev ? prev : minVal;
+    }
 
     answer.push(minVal);
   }
