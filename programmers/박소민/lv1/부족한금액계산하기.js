@@ -1,9 +1,6 @@
+// 수학적 계산 -> 등차수열
 function solution(price, money, count) {
-  var answer = 0;
+  const cost = (price * count * (count + 1)) / 2;
 
-  for (let i = 1; i <= count; i++) {
-    answer += price * i;
-  }
-
-  return answer <= money ? 0 : answer - money;
+  return cost > money ? cost - money : 0;
 }
