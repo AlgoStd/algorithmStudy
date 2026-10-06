@@ -6,18 +6,20 @@
 단순히 '현재 위치에서 같은 방향으로 간 적이 있는가'만 판단하면 된다.
 
 -> 따라서 단순 시뮬레이션이다.
+
+추가로) 저 모듈러 연산 너무 유용하다. 자주 사용하자!
 */
 
 function solution(grid) {
   const h = grid.length;
   const w = grid[0].length;
-  var answer = [];
+  const answer = [];
 
-  // [수정] 기존의 Set을 사용하면 안 좋은 경우 공간 복잡도 O(n^2)이다.
+  // [수정] 기존의 Set을 사용하면 오버헤드 때문에 공간복잡도가 크다.
   // 공간 복잡도를 위해 h, w, dir 3차원으로 배열 생성
-  const visited = Array.from({ length: h }, () =>
-    Array.from({ length: w }, () => Array(4).fill(false)),
-  );
+  // [수정] 공간복잡도를 더 줄이려면 Uint8Array 1차원으로 평탄화
+  // [참고] Uint8Array: 8비트 부호 없는 정수로 동작하는 배열. 연속된 물리적인 버퍼
+  const visited = new Uint8Array(h * w * 4);
 
   // 시계방향으로 선언
   const dr = [0, 1, 0, -1];
@@ -31,10 +33,12 @@ function solution(grid) {
         let dir = d;
         let cnt = 0;
 
-        if (visited[r][c][dir]) continue;
+        let idx = r * w * 4 + c * 4 + dir;
 
-        while (!visited[r][c][dir]) {
-          visited[r][c][dir] = true;
+        if (visited[idx] === 1) continue;
+
+        while (visited[idx] !== 1) {
+          visited[idx] = 1;
           const direction = grid[r][c];
 
           // 1. 좌회전
@@ -50,6 +54,8 @@ function solution(grid) {
           // 다음 방향 계산
           r = (r + dr[dir] + h) % h;
           c = (c + dc[dir] + w) % w;
+
+          idx = r * w * 4 + c * 4 + dir;
 
           cnt++;
         }
