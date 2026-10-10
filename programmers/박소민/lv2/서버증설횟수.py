@@ -5,7 +5,8 @@ def solution(players, m, k):
     erase = [0] * 24
     
     # 2. 현재 서버 수를 기록할 변수 초기화
-    servers = 1
+    # [수정] 0으로 초기화
+    servers = 0
     
     # 3. 24시간을 순회하면서 기록
     for i in range(24):
@@ -20,14 +21,15 @@ def solution(players, m, k):
         
         # 서버 수가 이용자 수보다 작거나 같다면 -> 서버 증가
         if user >= server:
-            need = user // m - servers + 1
+            need = user // m - servers
             
             # 1) 증가해야할 서버 계산 + 증설 횟수 answer에 기록
             servers += need
             answer += need
             
             # 2) k 시간 이후에 제거 기록
+            # [수정] = need가 아니라 갱신이므로 += need
             if i + k < 24:
-                erase[i + k] = need
+                erase[i + k] += need
     
     return answer
