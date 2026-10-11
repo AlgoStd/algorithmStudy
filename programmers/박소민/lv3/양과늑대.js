@@ -31,14 +31,21 @@ function solution(info, edges) {
 
     answer = Math.max(answer, ns);
 
+    // [수정] nextNodes 반복문으로 넣기 보다는 스프레드 연산자 활용
     // 2) 현재 노드에서 다음 노드로 들어가기 위한 후보 노드 추가
-    // (참조 배열 때문에 새로운 배열로 선언)
     const nextNodes = [...candidates, ...graph[node]];
 
+    // [수정] nextNode.length === 0이라면 알아서 종료 되므로 엣지케이스 삭제
     // 3) 그 다음 후보 노드로 dfs 돌리기
     for (let i = 0; i < nextNodes.length; i++) {
       const next = nextNodes[i];
-      dfs(next, nw, ns, [...nextNodes.slice(0, i), ...nextNodes.slice(i + 1)]);
+      // [수정] filter를 활용해서 새로운 배열 전달
+      dfs(
+        next,
+        nw,
+        ns,
+        nextNodes.filter((_, idx) => idx !== i),
+      );
     }
   };
 
