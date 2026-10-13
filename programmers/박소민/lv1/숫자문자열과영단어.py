@@ -1,5 +1,4 @@
 def solution(s):
-    answer = s
     
     words = [
         "zero", "one",  "two", "three", "four",
@@ -7,6 +6,6 @@ def solution(s):
     ]
     
     for i in range(10):
-        answer = f"{i}".join(answer.split(words[i]))
+        s = s.replace(words[i], str(i))
     
-    return int(answer)
+    return int(s)
