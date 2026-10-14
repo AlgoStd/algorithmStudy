@@ -19,24 +19,27 @@ dp
 => 기준 이전 삼각형에 오른쪽 마름모를 사용했는지 안했는지 -> 2차원.
 */
 
+// [수정] 기존의 2차원 ([n][2]) 배열을 이전 오른쪽 마름모 o/x로 공간 최적화
 function solution(n, tops) {
-    const mod = 10007;
-    // 0-index
-    const dp = Array.from({length : n}, () => Array(2).fill(0));
-    
-    // 삼각형 + 왼쪽, (가운데) 마름모
-    dp[0][0] = 2 + tops[0];
-    
-    // 오른쪽 마름모
-    dp[0][1] = 1;
-    
-    for (let i = 1; i < n; i++) {
-        // 하나로 합치기 위해서 상수 선언
-        const top = tops[i];
-        
-        dp[i][0] = (dp[i-1][0] * (2 + top) + dp[i-1][1] * (1 + top)) % mod;
-        dp[i][1] = (dp[i-1][0] + dp[i-1][1]) % mod
-    }
-    
-    return (dp[n-1][0] + dp[n-1][1]) % mod;
+  const mod = 10007;
+
+  // 삼각형 + 왼쪽, (가운데) 마름모
+  let prev1 = 2 + tops[0];
+
+  // 오른쪽 마름모
+  let prev2 = 1;
+
+  // 0-index
+  for (let i = 1; i < n; i++) {
+    // 하나로 합치기 위해서 상수 선언
+    const top = tops[i];
+
+    const next1 = (prev1 * (2 + top) + prev2 * (1 + top)) % mod;
+    const next2 = (prev1 + prev2) % mod;
+
+    prev1 = next1;
+    prev2 = next2;
+  }
+
+  return (prev1 + prev2) % mod;
 }
