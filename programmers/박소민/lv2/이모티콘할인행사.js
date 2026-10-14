@@ -44,8 +44,10 @@ function solution(users, emoticons) {
         }
       }
 
+      // [수정] 참조 할당 혹시 모르니 얕은 복사
       if (total[0] > answer[0]) {
-        answer = total;
+        answer[0] = total[0];
+        answer[1] = total[1];
       } else if (total[0] === answer[0]) {
         answer[1] = Math.max(answer[1], total[1]);
       }
