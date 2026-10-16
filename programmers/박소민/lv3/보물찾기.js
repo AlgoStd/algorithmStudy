@@ -60,13 +60,11 @@ function solution(depth, money, excavate) {
   let left = 0;
   let right = n - 1;
 
-  if (dp[left][right][0] > money) return -1;
-
   while (left <= right) {
     // 현재 비용이 최소인 인덱스 구하기
     const idx = dp[left][right][1];
 
-    // 검사하기
+    // 검사하기 1-index로 변환
     const result = excavate(idx + 1);
 
     if (result === 0) return idx + 1;
@@ -74,7 +72,7 @@ function solution(depth, money, excavate) {
       right = Math.max(0, idx - 1);
     } else if (result === 1) {
       left = Math.min(n - 1, idx + 1);
-    } else return -1;
+    }
   }
 
   return 0;
