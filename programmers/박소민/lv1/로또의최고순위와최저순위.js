@@ -7,13 +7,10 @@ function solution(lottos, win_nums) {
   let zeroCnt = 0;
   let matchCnt = 0;
 
-  for (const num of lottos) {
-    if (num === 0) {
-      zeroCnt++;
-    } else if (winSet.has(num)) {
-      matchCnt++;
-    }
-  }
+  lottos.forEach((v) => {
+    if (winSet.has(v)) matchCnt++;
+    else if (v === 0) zeroCnt++;
+  });
 
   return [rank[matchCnt + zeroCnt], rank[matchCnt]];
 }

@@ -12,7 +12,7 @@ function solution(arr) {
           compress(r, c + half, half);
           compress(r + half, c, half);
           compress(r + half, c + half, half);
-          return;
+          return; // 반드시 필요
         }
       }
     }
