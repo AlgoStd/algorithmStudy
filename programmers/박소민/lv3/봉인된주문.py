@@ -1,21 +1,15 @@
-def char_to_idx(string):
-    # 1-index
-    return ord(string) - 96
+def to_num(string):
+    num = 0
+    for char in string:
+        # 1-index
+        # [수정] 누적 방식 * 26
+        num = num * 26 + ord(char) - ord('a') + 1
+    return num
 
 def solution(n, bans):
-    # 숫자로 변환
-    for i in range(len(bans)):
-        num = 0
-        
-        size = len(bans[i])
-        for j in range(size):
-            num += char_to_idx(bans[i][size-1-j]) * 26 **(j)
-            
-        bans[i] = num
+    new_bans = sorted([to_num(w) for w in bans])
     
-    bans.sort()
-    
-    for ban in bans:
+    for ban in new_bans:
         if ban <= n:
             n += 1
         else:
@@ -27,7 +21,7 @@ def solution(n, bans):
         # 0-index로 변환
         n -= 1
         curr = n % 26
-        answer = chr(curr + 97) + answer
+        answer = chr(curr + ord('a')) + answer
         n //= 26
     
     return answer
